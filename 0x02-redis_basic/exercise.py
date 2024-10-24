@@ -10,6 +10,7 @@ def count_calls(method: Callable) -> Callable:
     """Decorator to count how many times a method is called."""
     @wraps(method)
     def wrapper(self, *args, **kwargs):
+        """Wrapper."""
         key = method.__qualname__
         self._redis.incr(key)
         return method(self, *args, **kwargs)
@@ -21,6 +22,7 @@ def call_history(method: Callable) -> Callable:
     and outputs for a particular function."""
     @wraps(method)
     def wrapper(self, *args, **kwargs):
+        """Wrapper."""
         inputs_key = method.__qualname__ + ":inputs"
         outputs_key = method.__qualname__ + ":outputs"
 
@@ -32,14 +34,14 @@ def call_history(method: Callable) -> Callable:
     return wrapper
 
 
-def replay(fn: Callable) -> None:
+def replay(function: Callable):
     """Display the history of calls of a particular function."""
     r = redis.Redis()
-    inputs = r.lrange(fn.__qualname__ + ":inputs", 0, -1)
-    outputs = r.lrange(fn.__qualname__ + ":outputs", 0, -1)
-    print(f"{fn.__qualname__} was called {len(outputs)} times:")
+    inputs = r.lrange(function.__qualname__ + ":inputs", 0, -1)
+    outputs = r.lrange(function.__qualname__ + ":outputs", 0, -1)
+    print(f"{function.__qualname__} was called {len(outputs)} times:")
     for inp, out in zip(inputs, outputs):
-        print(f"{fn.__qualname__}(*{(inp.decode('utf-8'))}) -> "
+        print(f"{function.__qualname__}(*{(inp.decode('utf-8'))}) -> "
               f"{out.decode('utf-8')}")
 
 
