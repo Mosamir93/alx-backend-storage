@@ -17,4 +17,4 @@ def get_page(url: str) -> str:
         return cached_page.decode('utf-8')
     response = requests.get(url)
     r.setex(url, 10, response.content)
-    return response.content
+    return response.text
