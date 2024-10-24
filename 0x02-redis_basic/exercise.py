@@ -32,6 +32,18 @@ def call_history(method: Callable) -> Callable:
     return wrapper
 
 
+def replay(method: Callable):
+    inputs_key = method.__qualname__ + ":inputs"
+    outputs_key = method.__qualname__ + ":outputs"
+
+    r = redis.Redis()
+    inputs = r.lrange(inputs_key, 0, -1)
+    outputs = r.lrange(outputs_key, 0, -1)
+    print(f"{method.__qualname__} was called {len(outputs)} times:")
+    for inp, out in zip(inputs, outputs):
+        print(f"{method.__qualname__}(*{inp}) -> {out}")
+
+
 class Cache:
     def __init__(self):
         """Initialiase the redis connection."""
