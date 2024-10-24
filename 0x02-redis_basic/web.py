@@ -2,19 +2,33 @@
 """Get_page function module."""
 import requests
 import redis
+from functools import wraps
+
+store = redis.Redis()
 
 
+def count_url_access(method):
+    """ Decorator counting how many times
+    a URL is accessed """
+    @wraps(method)
+    def wrapper(url):
+        cached_key = "cached:" + url
+        cached_data = store.get(cached_key)
+        if cached_data:
+            return cached_data.decode("utf-8")
+
+        count_key = "count:" + url
+        html = method(url)
+
+        store.incr(count_key)
+        store.set(cached_key, html)
+        store.expire(cached_key, 10)
+        return html
+    return wrapper
+
+
+@count_url_access
 def get_page(url: str) -> str:
-    """Track how many times a particular URL was accessed in the key
-    "count:{url}" and cache the result with an expiration time of 10 seconds.
-    """
-    count = f"count:{url}"
-    r = redis.Redis()
-    r.incr(count)
-
-    cached_page = r.get(url)
-    if cached_page:
-        return cached_page.decode('utf-8')
-    response = requests.get(url)
-    r.setex(url, 10, response.content)
-    return response.text
+    """ Returns HTML content of a url """
+    res = requests.get(url)
+    return res.text
