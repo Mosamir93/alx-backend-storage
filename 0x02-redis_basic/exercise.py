@@ -36,7 +36,9 @@ def call_history(method: Callable) -> Callable:
 
 def replay(function: Callable):
     """Display the history of calls of a particular function."""
-    r = redis.Redis()
+    r = getattr(fn.__self__, '_redis', None)
+    if not isinstance(r, redis.Redis):
+        return
     inputs = r.lrange(function.__qualname__ + ":inputs", 0, -1)
     outputs = r.lrange(function.__qualname__ + ":outputs", 0, -1)
     print(f"{function.__qualname__} was called {len(outputs)} times:")
